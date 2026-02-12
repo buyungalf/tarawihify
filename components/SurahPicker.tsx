@@ -20,13 +20,15 @@ export default function SurahPicker({
 }: SurahPickerProps) {
   const [filterText, setFilterText] = useState('');
 
-  const filteredSurahs = useMemo(
-    () =>
-      (surahList as Surah[]).filter((surah) =>
-        surah.name.toLowerCase().includes(filterText.toLowerCase())
-      ),
-    [filterText]
-  );
+  const filteredSurahs = useMemo(() => {
+    const normalizedFilter = filterText.toLowerCase().trim();
+
+    return (surahList as Surah[])
+      .filter((surah) =>
+        surah.name.toLowerCase().includes(normalizedFilter)
+      )
+      .sort((a, b) => a.verses - b.verses);
+  }, [filterText]);
 
   return (
     <div className="w-full max-w-md space-y-4">
@@ -38,7 +40,7 @@ export default function SurahPicker({
         onChange={(e) => setFilterText(e.target.value)}
       />
 
-      <ul className="divide-y rounded border">
+      <ul className="divide-y rounded border max-h-80 overflow-y-auto">
         {filteredSurahs.map((surah) => {
           const isSelected = selectedSurahIds.includes(surah.id);
           return (

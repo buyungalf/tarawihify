@@ -6,10 +6,18 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import SurahPicker from "@/components/SurahPicker";
 import SetlistDisplay from "@/components/SetlistDisplay";
 import { parseListFromUrl, serializeListToUrl } from "@/utils/urlHelpers";
+import surahList from "@/data/surah.json";
 
 const PRESETS: Record<string, number[]> = {
   "11 Rakaat Short": [1, 112, 113, 114, 108, 109, 112, 113, 108, 109, 114],
   "Random 5 Short Surahs": [113, 114, 109, 112, 108],
+};
+const RAKAAT_OPTIONS = [8, 20] as const;
+
+type Surah = {
+  id: number;
+  name: string;
+  verses: number;
 };
 
 export default function HomePage() {
@@ -17,6 +25,7 @@ export default function HomePage() {
   const router = useRouter();
   const pathname = usePathname();
   const [selectedSurahIds, setSelectedSurahIds] = useState<number[]>([]);
+  const [rakaat, setRakaat] = useState<number>(8);
   const [header, setHeader] = useState("Community Mosque");
   const [isExporting, setIsExporting] = useState(false);
   const [isExportMode, setIsExportMode] = useState(false);
@@ -125,6 +134,22 @@ export default function HomePage() {
     setTheme((prev) => (prev === "classic" ? "thermal" : "classic"));
   };
 
+  const handleRandomize = () => {
+    const uniqueSurahs = Array.from(
+      new Map((surahList as Surah[]).map((surah) => [surah.id, surah])).values(),
+    );
+    const desiredCount = Math.min(rakaat, uniqueSurahs.length);
+    const shuffled = [...uniqueSurahs];
+
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    const randomIds = shuffled.slice(0, desiredCount).map((surah) => surah.id);
+    setSelectedSurahIds(randomIds);
+  };
+
   return (
     <main className="min-h-screen flex flex-col items-center gap-6 p-6">
       <h1 className="text-xl font-semibold">Tarawih Setlist Generator</h1>
@@ -145,6 +170,35 @@ export default function HomePage() {
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="w-full max-w-md space-y-3">
+        <p className="text-center text-sm font-semibold uppercase tracking-wide text-gray-600">
+          Rakaat Count
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {RAKAAT_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setRakaat(option)}
+              className={`rounded border px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 ${
+                rakaat === option
+                  ? "border-gray-900 bg-gray-900 text-white"
+                  : "border-gray-300 bg-white text-gray-700"
+              }`}
+            >
+              {option} Rakaat
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={handleRandomize}
+          className="w-full rounded border border-gray-300 px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100"
+        >
+          Random
+        </button>
       </section>
 
       <SurahPicker

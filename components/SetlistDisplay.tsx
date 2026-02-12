@@ -112,38 +112,42 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
                   theme === 'classic'
                     ? 'cursor-not-allowed border-gray-200 text-gray-300'
                     : 'cursor-not-allowed border-neutral-700 text-neutral-600';
+                const shouldShowDivider =
+                  (index + 1) % 4 === 0 && index !== selectedSurahs.length - 1;
                 return (
-                  <li
-                    key={`${surah.id}-${index}`}
-                    className="flex items-center justify-between gap-2"
-                  >
-                    <span className={indexText}>{index + 1}.</span>
-                    <span className="flex-1 px-2">{surah.name}</span>
-                    <span className="w-20 text-right">{surah.verses} ayat</span>
-                    <div className={`flex gap-1 ${isExportMode ? 'hidden' : ''}`}>
-                      <button
-                        type="button"
-                        onClick={() => moveUp(index)}
-                        disabled={isFirst}
-                        className={`rounded border px-2 py-1 text-xs transition-all duration-200 ${
-                          isFirst ? disabledButtonClasses : activeButtonClasses
-                        }`}
-                        aria-label={`Move ${surah.name} up`}
-                      >
-                        &uarr;
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveDown(index)}
-                        disabled={isLast}
-                        className={`rounded border px-2 py-1 text-xs transition-all duration-200 ${
-                          isLast ? disabledButtonClasses : activeButtonClasses
-                        }`}
-                        aria-label={`Move ${surah.name} down`}
-                      >
-                        &darr;
-                      </button>
+                  <li key={`${surah.id}-${index}`} className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={indexText}>{index + 1}.</span>
+                      <span className="flex-1 px-2">{surah.name}</span>
+                      <span className="w-20 text-right">{surah.verses} ayat</span>
+                      <div className={`flex gap-1 ${isExportMode ? 'hidden' : ''}`}>
+                        <button
+                          type="button"
+                          onClick={() => moveUp(index)}
+                          disabled={isFirst}
+                          className={`rounded border px-2 py-1 text-xs transition-all duration-200 ${
+                            isFirst ? disabledButtonClasses : activeButtonClasses
+                          }`}
+                          aria-label={`Move ${surah.name} up`}
+                        >
+                          &uarr;
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveDown(index)}
+                          disabled={isLast}
+                          className={`rounded border px-2 py-1 text-xs transition-all duration-200 ${
+                            isLast ? disabledButtonClasses : activeButtonClasses
+                          }`}
+                          aria-label={`Move ${surah.name} down`}
+                        >
+                          &darr;
+                        </button>
+                      </div>
                     </div>
+                    {shouldShowDivider && (
+                      <div className="border-t border-gray-300" />
+                    )}
                   </li>
                 );
               })}
