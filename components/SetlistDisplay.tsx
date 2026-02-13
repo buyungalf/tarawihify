@@ -58,12 +58,12 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
     const indexText =
       theme === 'classic' ? 'text-gray-600' : 'text-neutral-300';
 
-    return (
-      <div
-        ref={ref}
-        data-export={isExportMode ? 'true' : 'false'}
-        className={`w-[390px] mx-auto space-y-4 border border-dashed p-4 font-mono text-sm tracking-wide ${themeClasses}`}
-      >
+  return (
+    <div
+      ref={ref}
+      data-export={isExportMode ? 'true' : 'false'}
+      className={`mx-auto w-full max-w-[560px] space-y-4 border border-dashed p-4 font-mono text-sm tracking-wide ${themeClasses}`}
+    >
         <label
           className={`block text-xs uppercase tracking-wide ${
             isExportMode ? 'hidden' : subtleText

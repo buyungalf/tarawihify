@@ -2,16 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import SurahPicker from "@/components/SurahPicker";
 import SetlistDisplay from "@/components/SetlistDisplay";
 import { parseListFromUrl, serializeListToUrl } from "@/utils/urlHelpers";
 import surahList from "@/data/surah.json";
 
-const PRESETS: Record<string, number[]> = {
-  "11 Rakaat Short": [1, 112, 113, 114, 108, 109, 112, 113, 108, 109, 114],
-  "Random 5 Short Surahs": [113, 114, 109, 112, 108],
-};
 const RAKAAT_OPTIONS = [8, 20] as const;
 
 type Surah = {
@@ -23,17 +19,13 @@ type Surah = {
 export default function HomePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
   const [selectedSurahIds, setSelectedSurahIds] = useState<number[]>([]);
   const [rakaat, setRakaat] = useState<number>(8);
-  const [header, setHeader] = useState("Community Mosque");
+  const [header, setHeader] = useState("");
   const [isExporting, setIsExporting] = useState(false);
-  const [isExportMode, setIsExportMode] = useState(false);
   const [theme, setTheme] = useState<"classic" | "thermal">("classic");
-  const [exportSize, setExportSize] = useState<"receipt" | "story">("receipt");
   const [copyFeedback, setCopyFeedback] = useState<"idle" | "copied">("idle");
-  const receiptRef = useRef<HTMLDivElement | null>(null);
-  const storyExportRef = useRef<HTMLDivElement | null>(null);
+  const exportContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const listParam = searchParams.get("list");
@@ -91,16 +83,16 @@ export default function HomePage() {
     });
   };
 
-  const applyPreset = (ids: number[]) => {
-    setSelectedSurahIds([...ids]);
+  const handleRakaatChange = (option: (typeof RAKAAT_OPTIONS)[number]) => {
+    if (option === rakaat) return;
+    setRakaat(option);
+    setSelectedSurahIds([]);
   };
 
   const handleDownload = async () => {
-    const targetNode =
-      exportSize === "story" ? storyExportRef.current : receiptRef.current;
+    const targetNode = exportContainerRef.current;
     if (!targetNode || isExporting) return;
     setIsExporting(true);
-    setIsExportMode(true);
 
     try {
       const dataUrl = await toPng(targetNode, {
@@ -115,7 +107,6 @@ export default function HomePage() {
     } catch (error) {
       console.error("Failed to export setlist", error);
     } finally {
-      setIsExportMode(false);
       setIsExporting(false);
     }
   };
@@ -151,137 +142,120 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center gap-6 p-6">
-      <h1 className="text-xl font-semibold">Tarawih Setlist Generator</h1>
+    <main className="min-h-screen w-full px-6 py-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+        <h1 className="text-center text-2xl font-semibold">
+          Tarawih Setlist Generator
+        </h1>
 
-      <section className="w-full max-w-md space-y-3">
-        <p className="text-center text-sm font-semibold uppercase tracking-wide text-gray-600">
-          Quick Presets
-        </p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {Object.entries(PRESETS).map(([label, ids]) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => applyPreset(ids)}
-              className="rounded border border-gray-300 px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="w-full max-w-md space-y-3">
-        <p className="text-center text-sm font-semibold uppercase tracking-wide text-gray-600">
-          Rakaat Count
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          {RAKAAT_OPTIONS.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setRakaat(option)}
-              className={`rounded border px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 ${
-                rakaat === option
-                  ? "border-gray-900 bg-gray-900 text-white"
-                  : "border-gray-300 bg-white text-gray-700"
-              }`}
-            >
-              {option} Rakaat
-            </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={handleRandomize}
-          className="w-full rounded border border-gray-300 px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100"
-        >
-          Random
-        </button>
-      </section>
-
-      <SurahPicker
-        selectedSurahIds={selectedSurahIds}
-        onToggleSurah={handleToggleSurah}
-      />
-
-      <div className="w-full max-w-md space-y-3 text-center">
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="w-full rounded border border-gray-300 px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100"
-        >
-          Theme: {theme === "classic" ? "Classic" : "Thermal"}
-        </button>
-        <div className="w-full rounded border border-gray-200 px-4 py-3 text-sm">
-          <p className="mb-2 font-semibold uppercase tracking-wide text-gray-600">
-            Export Size
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {[["receipt", "Receipt"] as const, ["story", "Story"] as const].map(
-              ([value, label]) => (
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Controls section - appears first in JSX for correct mobile stacking */}
+          <div className="lg:w-1/3 space-y-4">
+            <section className="space-y-3">
+              <p className="text-center text-sm font-semibold uppercase tracking-wide text-gray-600">
+                Rakaat Count
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {RAKAAT_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleRakaatChange(option)}
+                    className={`rounded border px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 ${
+                      rakaat === option
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-300 bg-white text-gray-700"
+                    }`}
+                  >
+                    {option} Rakaat
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <button
-                  key={value}
                   type="button"
-                  onClick={() => setExportSize(value)}
-                  className={`rounded border px-3 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 ${
-                    exportSize === value
-                      ? "border-gray-900 bg-gray-900 text-white"
-                      : "border-gray-300 bg-white text-gray-700"
-                  }`}
+                  onClick={handleRandomize}
+                  className="rounded border border-gray-300 px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100"
                 >
-                  {label}
+                  Random
                 </button>
-              ),
-            )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedSurahIds([])}
+                  className="rounded border border-gray-300 px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100"
+                >
+                  Reset
+                </button>
+              </div>
+            </section>
+
+            <SurahPicker
+              selectedSurahIds={selectedSurahIds}
+              onToggleSurah={handleToggleSurah}
+            />
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="w-full rounded border border-gray-300 px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100"
+            >
+              Theme: {theme === "classic" ? "Classic" : "Thermal"}
+            </button>
+          </div>
+
+          {/* Preview section - appears second in JSX for correct mobile stacking */}
+          <div className="lg:w-2/3 space-y-6">
+            <div className="flex flex-col items-center">
+              <SetlistDisplay
+                selectedSurahIds={selectedSurahIds}
+                moveUp={moveUp}
+                moveDown={moveDown}
+                theme={theme}
+                header={header}
+                onHeaderChange={setHeader}
+              />
+            </div>
+
+            <div className="flex w-full flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={isExporting}
+                className="flex-1 rounded border border-gray-300 px-6 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isExporting ? "Generating image..." : "Download PNG"}
+              </button>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="flex-1 rounded border border-gray-300 px-6 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50"
+              >
+                {copyFeedback === "copied" ? "Copied!" : "Copy Link"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <SetlistDisplay
-        ref={receiptRef}
-        selectedSurahIds={selectedSurahIds}
-        moveUp={moveUp}
-        moveDown={moveDown}
-        isExportMode={isExportMode}
-        theme={theme}
-        header={header}
-        onHeaderChange={setHeader}
-      />
-
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={handleDownload}
-          disabled={isExporting}
-          className="rounded border border-gray-300 px-6 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isExporting ? "Generating image..." : "Download PNG"}
-        </button>
-        <button
-          type="button"
-          onClick={handleCopyLink}
-          className="rounded border border-gray-300 px-6 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50"
-        >
-          {copyFeedback === "copied" ? "Copied!" : "Copy Link"}
-        </button>
-      </div>
-
-      <div className="sr-only absolute -left-[9999px]" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute -left-[9999px] top-0"
+        aria-hidden="true"
+      >
         <div
-          ref={storyExportRef}
-          className="w-[1080px] h-[1920px] flex items-center justify-center bg-white"
+          ref={exportContainerRef}
+          className="aspect-video w-[1920px] max-w-none rounded-[48px] border border-gray-200 bg-gradient-to-b from-white to-gray-50"
         >
-          <SetlistDisplay
-            selectedSurahIds={selectedSurahIds}
-            moveUp={moveUp}
-            moveDown={moveDown}
-            isExportMode
-            theme={theme}
-            header={header}
-            onHeaderChange={() => {}}
-          />
+          <div className="flex h-full w-full items-center justify-center bg-white p-16">
+            <SetlistDisplay
+              selectedSurahIds={selectedSurahIds}
+              moveUp={moveUp}
+              moveDown={moveDown}
+              isExportMode
+              theme={theme}
+              header={header}
+              onHeaderChange={setHeader}
+            />
+          </div>
         </div>
       </div>
     </main>
