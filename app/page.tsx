@@ -21,14 +21,16 @@ export default function HomePage() {
   const router = useRouter();
   const [selectedSurahIds, setSelectedSurahIds] = useState<number[]>([]);
   const [rakaat, setRakaat] = useState<number>(8);
-  const [header, setHeader] = useState("");
+  const [title, setTitle] = useState("Tarawih Setlist Day-?");
+  const [creatorName, setCreatorName] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [theme, setTheme] = useState<"classic" | "thermal">("classic");
   const [copyFeedback, setCopyFeedback] = useState<"idle" | "copied">("idle");
-  const exportContainerRef = useRef<HTMLDivElement | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const listParam = searchParams.get("list");
+    const titleParam = searchParams.get("title");
 
     if (listParam) {
       const parsed = parseListFromUrl(listParam);
@@ -41,24 +43,40 @@ export default function HomePage() {
         return parsed;
       });
     }
+    if (titleParam) {
+      setTitle(titleParam);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const current = searchParams.get("list") || "";
-    const next = serializeListToUrl(selectedSurahIds);
+    const currentList = searchParams.get("list") || "";
+    const nextList = serializeListToUrl(selectedSurahIds);
+    const currentTitle = searchParams.get("title") || "";
 
-    if (current !== next) {
-      router.replace(`?list=${next}`, { scroll: false });
+    if (currentList !== nextList || currentTitle !== title) {
+      const nextParams = new URLSearchParams();
+      if (selectedSurahIds.length > 0 || currentList) {
+        nextParams.set("list", nextList);
+      }
+      if (title) {
+        nextParams.set("title", title);
+      }
+      const query = nextParams.toString();
+      router.replace(query ? `?${query}` : "", { scroll: false });
     }
-  }, [selectedSurahIds]);
+  }, [selectedSurahIds, title]);
 
   const handleToggleSurah = (id: number) => {
-    setSelectedSurahIds((prev) =>
-      prev.includes(id)
+    setSelectedSurahIds((prev) => {
+      const isSelected = prev.includes(id);
+      if (!isSelected && prev.length >= rakaat) {
+        return prev;
+      }
+      return isSelected
         ? prev.filter((surahId) => surahId !== id)
-        : [...prev, id],
-    );
+        : [...prev, id];
+    });
   };
 
   const moveUp = (index: number) => {
@@ -90,7 +108,7 @@ export default function HomePage() {
   };
 
   const handleDownload = async () => {
-    const targetNode = exportContainerRef.current;
+    const targetNode = previewRef.current;
     if (!targetNode || isExporting) return;
     setIsExporting(true);
 
@@ -191,8 +209,20 @@ export default function HomePage() {
 
             <SurahPicker
               selectedSurahIds={selectedSurahIds}
+              rakaat={rakaat}
               onToggleSurah={handleToggleSurah}
             />
+
+            <label className="block text-sm font-medium text-gray-700">
+              Creator Name
+              <input
+                type="text"
+                value={creatorName}
+                onChange={(event) => setCreatorName(event.target.value)}
+                placeholder="Your name"
+                className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              />
+            </label>
 
             <button
               type="button"
@@ -207,12 +237,15 @@ export default function HomePage() {
           <div className="lg:w-2/3 space-y-6">
             <div className="flex flex-col items-center">
               <SetlistDisplay
+                ref={previewRef}
                 selectedSurahIds={selectedSurahIds}
                 moveUp={moveUp}
                 moveDown={moveDown}
+                isExportMode={isExporting}
                 theme={theme}
-                header={header}
-                onHeaderChange={setHeader}
+                title={title}
+                onTitleChange={setTitle}
+                creatorName={creatorName}
               />
             </div>
 
@@ -237,27 +270,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div
-        className="pointer-events-none absolute -left-[9999px] top-0"
-        aria-hidden="true"
-      >
-        <div
-          ref={exportContainerRef}
-          className="aspect-video w-[1920px] max-w-none rounded-[48px] border border-gray-200 bg-gradient-to-b from-white to-gray-50"
-        >
-          <div className="flex h-full w-full items-center justify-center bg-white p-16">
-            <SetlistDisplay
-              selectedSurahIds={selectedSurahIds}
-              moveUp={moveUp}
-              moveDown={moveDown}
-              isExportMode
-              theme={theme}
-              header={header}
-              onHeaderChange={setHeader}
-            />
-          </div>
-        </div>
-      </div>
     </main>
   );
 }

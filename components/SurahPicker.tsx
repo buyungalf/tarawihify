@@ -11,14 +11,17 @@ type Surah = {
 
 type SurahPickerProps = {
   selectedSurahIds: number[];
+  rakaat: number;
   onToggleSurah: (id: number) => void;
 };
 
 export default function SurahPicker({
   selectedSurahIds,
+  rakaat,
   onToggleSurah,
 }: SurahPickerProps) {
   const [filterText, setFilterText] = useState('');
+  const hasReachedLimit = selectedSurahIds.length >= rakaat;
 
   const filteredSurahs = useMemo(() => {
     const normalizedFilter = filterText.toLowerCase().trim();
@@ -43,6 +46,7 @@ export default function SurahPicker({
       <ul className="divide-y rounded border max-h-80 overflow-y-auto">
         {filteredSurahs.map((surah) => {
           const isSelected = selectedSurahIds.includes(surah.id);
+          const isAddDisabled = !isSelected && hasReachedLimit;
           return (
             <li
               key={surah.id}
@@ -59,10 +63,10 @@ export default function SurahPicker({
                 <button
                   type="button"
                   onClick={() => onToggleSurah(surah.id)}
-                  disabled={isSelected}
+                  disabled={isAddDisabled || isSelected}
                   className={`rounded border px-3 py-1 text-xs font-semibold transition ${
-                    isSelected
-                      ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500'
+                    isAddDisabled || isSelected
+                      ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-500 opacity-50'
                       : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
                   }`}
                 >
@@ -83,6 +87,12 @@ export default function SurahPicker({
           );
         })}
       </ul>
+
+      {hasReachedLimit && (
+        <p className="text-xs text-gray-500">
+          Maximum {rakaat} surahs selected
+        </p>
+      )}
     </div>
   );
 }
