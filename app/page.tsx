@@ -1,20 +1,5 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
-import { toPng } from "html-to-image";
-import { useRouter, useSearchParams } from "next/navigation";
-import SurahPicker from "@/components/SurahPicker";
-import SetlistDisplay from "@/components/SetlistDisplay";
-import { parseListFromUrl, serializeListToUrl } from "@/utils/urlHelpers";
-import surahList from "@/data/surah.json";
-
-const RAKAAT_OPTIONS = [8, 20] as const;
-
-type Surah = {
-  id: number;
-  name: string;
-  verses: number;
-};
+import { Suspense } from "react";
+import HomePageClient from "@/components/HomePageClient";
 
 export default function HomePage() {
   const searchParams = useSearchParams();
