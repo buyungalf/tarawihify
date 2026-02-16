@@ -21,16 +21,13 @@ export default function HomePage() {
   const router = useRouter();
   const [selectedSurahIds, setSelectedSurahIds] = useState<number[]>([]);
   const [rakaat, setRakaat] = useState<number>(8);
-  const [title, setTitle] = useState("Tarawih Setlist Day-?");
   const [creatorName, setCreatorName] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [theme, setTheme] = useState<"classic" | "thermal">("classic");
-  const [copyFeedback, setCopyFeedback] = useState<"idle" | "copied">("idle");
   const previewRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const listParam = searchParams.get("list");
-    const titleParam = searchParams.get("title");
 
     if (listParam) {
       const parsed = parseListFromUrl(listParam);
@@ -43,29 +40,22 @@ export default function HomePage() {
         return parsed;
       });
     }
-    if (titleParam) {
-      setTitle(titleParam);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const currentList = searchParams.get("list") || "";
     const nextList = serializeListToUrl(selectedSurahIds);
-    const currentTitle = searchParams.get("title") || "";
 
-    if (currentList !== nextList || currentTitle !== title) {
+    if (currentList !== nextList) {
       const nextParams = new URLSearchParams();
       if (selectedSurahIds.length > 0 || currentList) {
         nextParams.set("list", nextList);
       }
-      if (title) {
-        nextParams.set("title", title);
-      }
       const query = nextParams.toString();
       router.replace(query ? `?${query}` : "", { scroll: false });
     }
-  }, [selectedSurahIds, title]);
+  }, [selectedSurahIds, router, searchParams]);
 
   const handleToggleSurah = (id: number) => {
     setSelectedSurahIds((prev) => {
@@ -129,16 +119,6 @@ export default function HomePage() {
     }
   };
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopyFeedback("copied");
-      setTimeout(() => setCopyFeedback("idle"), 1500);
-    } catch (error) {
-      console.error("Failed to copy link", error);
-    }
-  };
-
   const toggleTheme = () => {
     setTheme((prev) => (prev === "classic" ? "thermal" : "classic"));
   };
@@ -169,6 +149,17 @@ export default function HomePage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Controls section - appears first in JSX for correct mobile stacking */}
           <div className="lg:w-1/3 space-y-4">
+            <label className="block text-sm font-medium text-gray-700">
+              BY
+              <input
+                type="text"
+                value={creatorName}
+                onChange={(event) => setCreatorName(event.target.value)}
+                placeholder="Imam's name"
+                className="mt-1 w-full rounded border px-3 py-2 text-sm"
+              />
+            </label>
+
             <section className="space-y-3">
               <p className="text-center text-sm font-semibold uppercase tracking-wide text-gray-600">
                 Rakaat Count
@@ -202,7 +193,7 @@ export default function HomePage() {
                   onClick={() => setSelectedSurahIds([])}
                   className="rounded border border-gray-300 px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100"
                 >
-                  Reset
+                  Clear
                 </button>
               </div>
             </section>
@@ -213,61 +204,54 @@ export default function HomePage() {
               onToggleSurah={handleToggleSurah}
             />
 
-            <label className="block text-sm font-medium text-gray-700">
-              Creator Name
-              <input
-                type="text"
-                value={creatorName}
-                onChange={(event) => setCreatorName(event.target.value)}
-                placeholder="Your name"
-                className="mt-1 w-full rounded border px-3 py-2 text-sm"
-              />
-            </label>
-
             <button
               type="button"
               onClick={toggleTheme}
               className="w-full rounded border border-gray-300 px-4 py-2 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100"
             >
-              Theme: {theme === "classic" ? "Classic" : "Thermal"}
+              Theme: {theme === "classic" ? "Light" : "Dark"}
             </button>
           </div>
 
           {/* Preview section - appears second in JSX for correct mobile stacking */}
           <div className="lg:w-2/3 space-y-6">
-            <div className="flex flex-col items-center">
-              <SetlistDisplay
-                ref={previewRef}
-                selectedSurahIds={selectedSurahIds}
-                moveUp={moveUp}
-                moveDown={moveDown}
-                isExportMode={isExporting}
-                theme={theme}
-                title={title}
-                onTitleChange={setTitle}
-                creatorName={creatorName}
-              />
-            </div>
+            <div className="flex justify-center">
+              <div className="max-h-[85vh] overflow-y-auto">
+                <div className="w-[390px] max-w-full">
+                  <SetlistDisplay
+                    selectedSurahIds={selectedSurahIds}
+                    moveUp={moveUp}
+                    moveDown={moveDown}
+                    theme={theme}
+                    creatorName={creatorName}
+                  />
 
-            <div className="flex w-full flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={handleDownload}
-                disabled={isExporting}
-                className="flex-1 rounded border border-gray-300 px-6 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isExporting ? "Generating image..." : "Download PNG"}
-              </button>
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className="flex-1 rounded border border-gray-300 px-6 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-50"
-              >
-                {copyFeedback === "copied" ? "Copied!" : "Copy Link"}
-              </button>
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    disabled={isExporting}
+                    className="w-full mt-4 text-center py-2 rounded border border-gray-300 px-4 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isExporting ? "Generating image..." : "Download PNG"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="absolute -left-[9999px] top-0">
+        <SetlistDisplay
+          ref={previewRef}
+          selectedSurahIds={selectedSurahIds}
+          moveUp={moveUp}
+          moveDown={moveDown}
+          isExportMode
+          forceFixedLayout
+          theme={theme}
+          creatorName={creatorName}
+        />
       </div>
 
     </main>
