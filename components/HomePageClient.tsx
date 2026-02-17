@@ -20,6 +20,7 @@ export default function HomePageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [selectedSurahIds, setSelectedSurahIds] = useState<number[]>([]);
+  const [selectedSide, setSelectedSide] = useState<"MUHAMMADIYAH" | "NU">("NU");
   const [rakaat, setRakaat] = useState<number>(8);
   const [creatorName, setCreatorName] = useState("");
   const [isExporting, setIsExporting] = useState(false);
@@ -109,6 +110,11 @@ export default function HomePageClient() {
   };
 
   const handleDownload = async () => {
+    if (selectedSurahIds.length !== rakaat) {
+      alert(`Please select exactly ${rakaat} surahs first.`);
+      return;
+    }
+
     const targetNode = previewRef.current;
     if (!targetNode || isExporting) return;
     setIsExporting(true);
@@ -150,6 +156,8 @@ export default function HomePageClient() {
     setSelectedSurahIds(randomIds);
   };
 
+  const isComplete = selectedSurahIds.length === rakaat;
+
   return (
     <main className="min-h-screen w-full px-6 py-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
@@ -170,6 +178,28 @@ export default function HomePageClient() {
                 className="mt-1 w-full rounded border px-3 py-2 text-sm"
               />
             </label>
+
+            <section className="space-y-3">
+              <p className="text-center text-sm font-semibold uppercase tracking-wide text-gray-600">
+                Select Your Side
+              </p>
+              <div className="mx-auto grid max-w-[390px] grid-cols-2 gap-3">
+                {(["MUHAMMADIYAH", "NU"] as const).map((side) => (
+                  <button
+                    key={side}
+                    type="button"
+                    onClick={() => setSelectedSide(side)}
+                    className={`rounded border px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 ${
+                      selectedSide === side
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-300 bg-white text-gray-700"
+                    }`}
+                  >
+                    {side}
+                  </button>
+                ))}
+              </div>
+            </section>
 
             <section className="space-y-3">
               <p className="text-center text-sm font-semibold uppercase tracking-wide text-gray-600">
@@ -235,6 +265,7 @@ export default function HomePageClient() {
                 <div className="w-[390px] max-w-full">
                   <SetlistDisplay
                     selectedSurahIds={selectedSurahIds}
+                    selectedSide={selectedSide}
                     moveUp={moveUp}
                     moveDown={moveDown}
                     handleDelete={handleDelete}
@@ -245,8 +276,12 @@ export default function HomePageClient() {
                   <button
                     type="button"
                     onClick={handleDownload}
-                    disabled={isExporting}
-                    className="w-full mt-4 text-center py-2 rounded border border-gray-300 px-4 text-sm font-semibold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isExporting || !isComplete}
+                    className={`w-full mt-4 text-center py-2 rounded border border-gray-300 px-4 text-sm font-semibold uppercase tracking-wider transition-all duration-200 ${
+                      !isComplete
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:-translate-y-0.5 hover:bg-gray-100"
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {isExporting ? "Generating image..." : "Download PNG"}
                   </button>
@@ -261,6 +296,7 @@ export default function HomePageClient() {
         <SetlistDisplay
           ref={previewRef}
           selectedSurahIds={selectedSurahIds}
+          selectedSide={selectedSide}
           moveUp={moveUp}
           moveDown={moveDown}
           handleDelete={handleDelete}

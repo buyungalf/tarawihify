@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useMemo } from 'react';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import surahList from '@/data/surah.json';
 
 type Surah = {
@@ -11,6 +11,7 @@ type Surah = {
 
 type SetlistDisplayProps = {
   selectedSurahIds: number[];
+  selectedSide: 'MUHAMMADIYAH' | 'NU';
   moveUp: (index: number) => void;
   moveDown: (index: number) => void;
   handleDelete: (index: number) => void;
@@ -20,14 +21,17 @@ type SetlistDisplayProps = {
   creatorName: string;
 };
 
-const getCurrentTarawihDay = (): number => {
+const getCurrentTarawihDay = (selectedSide: 'MUHAMMADIYAH' | 'NU'): number => {
   const today = new Date();
   const normalizedToday = new Date(
     today.getFullYear(),
     today.getMonth(),
     today.getDate()
   );
-  const startDate = new Date(2026, 1, 18);
+  const startDate =
+    selectedSide === 'MUHAMMADIYAH'
+      ? new Date(2026, 1, 17)
+      : new Date(2026, 1, 18);
 
   if (normalizedToday < startDate) {
     return 1;
@@ -54,6 +58,7 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
   (
     {
       selectedSurahIds,
+      selectedSide,
       moveUp,
       moveDown,
       handleDelete,
@@ -79,6 +84,7 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
       .map((id) => (surahList as Surah[]).find((surah) => surah.id === id))
       .filter((surah): surah is Surah => Boolean(surah));
     const totalVerses = selectedSurahs.reduce((sum, surah) => sum + surah.verses, 0);
+    const [tarawihDayNumber, setTarawihDayNumber] = useState(1);
 
     const themeClasses =
       theme === 'classic'
@@ -101,10 +107,13 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
     const verseWidth = isCompact ? 'w-16' : 'w-20';
     const containerTracking = isCompact ? 'tracking-normal' : 'tracking-wide';
     const headerSpacing = isCompact ? 'mb-1' : 'mb-3';
-    const tarawihDayNumber = getCurrentTarawihDay();
     const containerSizeClass = isCompact ? 'w-[390px]' : 'w-[390px] aspect-[9/16]';
     const contentLayoutClass = isCompact ? sectionGap : `flex-1 ${sectionGap}`;
     const footerLayoutClass = isCompact ? '' : 'mt-auto';
+
+    useEffect(() => {
+      setTarawihDayNumber(getCurrentTarawihDay(selectedSide));
+    }, [selectedSide]);
 
     return (
       <div
