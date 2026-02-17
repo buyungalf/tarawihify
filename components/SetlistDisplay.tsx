@@ -1,6 +1,7 @@
 'use client';
 
 import { forwardRef, useEffect, useMemo, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import surahList from '@/data/surah.json';
 
 type Surah = {
@@ -11,7 +12,7 @@ type Surah = {
 
 type SetlistDisplayProps = {
   selectedSurahIds: number[];
-  selectedSide: 'MUHAMMADIYAH' | 'NU';
+  firstRamadhanDate: '18_FEB' | '19_FEB';
   moveUp: (index: number) => void;
   moveDown: (index: number) => void;
   handleDelete: (index: number) => void;
@@ -21,19 +22,24 @@ type SetlistDisplayProps = {
   creatorName: string;
 };
 
-const getCurrentTarawihDay = (selectedSide: 'MUHAMMADIYAH' | 'NU'): number => {
+const getCurrentTarawihDay = (firstRamadhanDate: '18_FEB' | '19_FEB'): number => {
   const today = new Date();
   const normalizedToday = new Date(
     today.getFullYear(),
     today.getMonth(),
     today.getDate()
   );
-  const startDate =
-    selectedSide === 'MUHAMMADIYAH'
+  const tarawihStartDate =
+    firstRamadhanDate === '18_FEB'
       ? new Date(2026, 1, 17)
       : new Date(2026, 1, 18);
+  const normalizedTarawihStartDate = new Date(
+    tarawihStartDate.getFullYear(),
+    tarawihStartDate.getMonth(),
+    tarawihStartDate.getDate()
+  );
 
-  if (normalizedToday < startDate) {
+  if (normalizedToday < normalizedTarawihStartDate) {
     return 1;
   }
 
@@ -43,9 +49,9 @@ const getCurrentTarawihDay = (selectedSide: 'MUHAMMADIYAH' | 'NU'): number => {
     normalizedToday.getDate()
   );
   const startDateUtc = Date.UTC(
-    startDate.getFullYear(),
-    startDate.getMonth(),
-    startDate.getDate()
+    normalizedTarawihStartDate.getFullYear(),
+    normalizedTarawihStartDate.getMonth(),
+    normalizedTarawihStartDate.getDate()
   );
   const differenceInDays = Math.floor(
     (normalizedTodayUtc - startDateUtc) / (1000 * 60 * 60 * 24)
@@ -58,7 +64,7 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
   (
     {
       selectedSurahIds,
-      selectedSide,
+      firstRamadhanDate,
       moveUp,
       moveDown,
       handleDelete,
@@ -99,7 +105,11 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
     const indexText =
       theme === 'classic' ? 'text-gray-600' : 'text-neutral-300';
     const isCompact = !forceFixedLayout && selectedSurahIds.length >= 16;
-    const receiptPadding = isCompact ? 'p-2' : 'p-4';
+    const receiptPadding = isCompact
+      ? 'pt-6 px-4 pb-4'
+      : isExportMode
+        ? 'pt-8 px-4 pb-4'
+        : 'p-4';
     const receiptText = isCompact ? 'text-xs' : 'text-sm';
     const sectionGap = isCompact ? 'space-y-1' : 'space-y-3';
     const rowGap = isCompact ? 'gap-1' : 'gap-2';
@@ -112,8 +122,8 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
     const footerLayoutClass = isCompact ? '' : 'mt-auto';
 
     useEffect(() => {
-      setTarawihDayNumber(getCurrentTarawihDay(selectedSide));
-    }, [selectedSide]);
+      setTarawihDayNumber(getCurrentTarawihDay(firstRamadhanDate));
+    }, [firstRamadhanDate]);
 
     return (
       <div
@@ -199,10 +209,10 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
                             <button
                               type="button"
                               onClick={() => handleDelete(index)}
-                              className="px-1 py-1 text-xs text-red-500 transition-all duration-200 hover:text-red-700"
+                              className="p-1 text-red-500 transition-all duration-200 hover:text-red-700"
                               aria-label={`Delete ${surah.name}`}
                             >
-                              &#10005;
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </div>

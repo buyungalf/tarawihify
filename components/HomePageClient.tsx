@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Github, Twitter } from "lucide-react";
 import SurahPicker from "@/components/SurahPicker";
 import SetlistDisplay from "@/components/SetlistDisplay";
 import { parseListFromUrl, serializeListToUrl } from "@/utils/urlHelpers";
@@ -20,8 +21,9 @@ export default function HomePageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [selectedSurahIds, setSelectedSurahIds] = useState<number[]>([]);
-  const [selectedSide, setSelectedSide] = useState<"MUHAMMADIYAH" | "NU">("NU");
-  const [rakaat, setRakaat] = useState<number>(8);
+  const [firstRamadhanDate, setFirstRamadhanDate] =
+    useState<"18_FEB" | "19_FEB">("19_FEB");
+  const [rakaat, setRakaat] = useState<number>(20);
   const [creatorName, setCreatorName] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [theme, setTheme] = useState<"classic" | "thermal">("classic");
@@ -57,6 +59,14 @@ export default function HomePageClient() {
       router.replace(query ? `?${query}` : "", { scroll: false });
     }
   }, [selectedSurahIds, router, searchParams]);
+
+  useEffect(() => {
+    if (firstRamadhanDate === "18_FEB") {
+      setRakaat(8);
+      return;
+    }
+    setRakaat(20);
+  }, [firstRamadhanDate]);
 
   const handleToggleSurah = (id: number) => {
     setSelectedSurahIds((prev) => {
@@ -109,12 +119,8 @@ export default function HomePageClient() {
     setSelectedSurahIds([]);
   };
 
-  const handleDownload = async () => {
-    if (selectedSurahIds.length !== rakaat) {
-      alert(`Please select exactly ${rakaat} surahs first.`);
-      return;
-    }
-
+  const exportPng = async () => {
+    if (selectedSurahIds.length !== rakaat) return;
     const targetNode = previewRef.current;
     if (!targetNode || isExporting) return;
     setIsExporting(true);
@@ -134,6 +140,11 @@ export default function HomePageClient() {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleDownload = async () => {
+    if (selectedSurahIds.length !== rakaat) return;
+    await exportPng();
   };
 
   const toggleTheme = () => {
@@ -181,21 +192,26 @@ export default function HomePageClient() {
 
             <section className="space-y-3">
               <p className="text-center text-sm font-semibold uppercase tracking-wide text-gray-600">
-                Select Your Side
+                YOUR FIRST DAY OF RAMADHAN
               </p>
               <div className="mx-auto grid max-w-[390px] grid-cols-2 gap-3">
-                {(["MUHAMMADIYAH", "NU"] as const).map((side) => (
+                {(
+                  [
+                    { label: "FEBRUARY 18", value: "18_FEB" },
+                    { label: "FEBRUARY 19", value: "19_FEB" },
+                  ] as const
+                ).map((option) => (
                   <button
-                    key={side}
+                    key={option.value}
                     type="button"
-                    onClick={() => setSelectedSide(side)}
+                    onClick={() => setFirstRamadhanDate(option.value)}
                     className={`rounded border px-4 py-2 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 ${
-                      selectedSide === side
+                      firstRamadhanDate === option.value
                         ? "border-gray-900 bg-gray-900 text-white"
                         : "border-gray-300 bg-white text-gray-700"
                     }`}
                   >
-                    {side}
+                    {option.label}
                   </button>
                 ))}
               </div>
@@ -265,7 +281,7 @@ export default function HomePageClient() {
                 <div className="w-[390px] max-w-full">
                   <SetlistDisplay
                     selectedSurahIds={selectedSurahIds}
-                    selectedSide={selectedSide}
+                    firstRamadhanDate={firstRamadhanDate}
                     moveUp={moveUp}
                     moveDown={moveDown}
                     handleDelete={handleDelete}
@@ -296,7 +312,7 @@ export default function HomePageClient() {
         <SetlistDisplay
           ref={previewRef}
           selectedSurahIds={selectedSurahIds}
-          selectedSide={selectedSide}
+          firstRamadhanDate={firstRamadhanDate}
           moveUp={moveUp}
           moveDown={moveDown}
           handleDelete={handleDelete}
@@ -306,6 +322,32 @@ export default function HomePageClient() {
           creatorName={creatorName}
         />
       </div>
+
+      <footer className="mt-12 mb-6 flex items-center justify-center gap-6 text-gray-500">
+        <a
+          href="https://github.com/foreveryungz"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`transition-all duration-200 ${
+            theme === "thermal" ? "hover:text-white" : "hover:text-black"
+          }`}
+          aria-label="GitHub profile"
+        >
+          <Github size={20} />
+        </a>
+
+        <a
+          href="https://x.com/yungleau"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`transition-all duration-200 ${
+            theme === "thermal" ? "hover:text-white" : "hover:text-black"
+          }`}
+          aria-label="Twitter profile"
+        >
+          <Twitter size={20} />
+        </a>
+      </footer>
     </main>
   );
 }
