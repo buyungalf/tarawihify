@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, useEffect, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import surahList from '@/data/surah.json';
 
@@ -75,15 +75,7 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
     },
     ref
   ) => {
-    const printedAt = useMemo(
-      () =>
-        new Intl.DateTimeFormat('en-GB', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-        }).format(new Date()),
-      []
-    );
+    const [printedDate, setPrintedDate] = useState('');
     const appUrl =
       typeof window !== 'undefined' ? window.location.origin : '';
     const selectedSurahs = selectedSurahIds
@@ -125,6 +117,21 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
       setTarawihDayNumber(getCurrentTarawihDay(firstRamadhanDate));
     }, [firstRamadhanDate]);
 
+    useEffect(() => {
+      const today = new Date();
+      const normalizedToday = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      );
+      const formattedDate = normalizedToday.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      setPrintedDate(formattedDate);
+    }, []);
+
     return (
       <div
         ref={ref}
@@ -140,7 +147,7 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
               >
                 {`TARAWIH DAY-${tarawihDayNumber}`}
               </h2>
-              <p className={`mt-0.5 text-xs ${subtleText}`}>{printedAt}</p>
+              <p className={`mt-0.5 text-xs ${subtleText}`}>{printedDate}</p>
               {creatorName.trim().length > 0 && (
                 <p className="mt-0.5 text-xs opacity-70">by {creatorName}</p>
               )}
