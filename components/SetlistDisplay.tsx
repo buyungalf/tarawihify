@@ -13,6 +13,7 @@ type SetlistDisplayProps = {
   selectedSurahIds: number[];
   moveUp: (index: number) => void;
   moveDown: (index: number) => void;
+  handleDelete: (index: number) => void;
   isExportMode?: boolean;
   forceFixedLayout?: boolean;
   theme: 'classic' | 'thermal';
@@ -55,6 +56,7 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
       selectedSurahIds,
       moveUp,
       moveDown,
+      handleDelete,
       isExportMode = false,
       forceFixedLayout = false,
       theme,
@@ -162,7 +164,7 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
                           <span className={`${verseWidth} text-right`}>
                             {surah.verses} ayat
                           </span>
-                          <div className={`flex gap-1 ${isExportMode ? 'hidden' : ''}`}>
+                          <div className={`flex items-center gap-1 ${isExportMode ? 'hidden' : ''}`}>
                             <button
                               type="button"
                               onClick={() => moveUp(index)}
@@ -184,6 +186,14 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
                               aria-label={`Move ${surah.name} down`}
                             >
                               &darr;
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(index)}
+                              className="px-1 py-1 text-xs text-red-500 transition-all duration-200 hover:text-red-700"
+                              aria-label={`Delete ${surah.name}`}
+                            >
+                              &#10005;
                             </button>
                           </div>
                         </div>
@@ -216,7 +226,7 @@ const SetlistDisplay = forwardRef<HTMLDivElement, SetlistDisplayProps>(
             theme === 'classic' ? 'text-gray-700' : 'text-neutral-300'
           }`}
         >
-            (c) {appUrl}
+            &copy; {appUrl}
           </p>
         </div>
 

@@ -91,6 +91,17 @@ export default function HomePageClient() {
     });
   };
 
+  const handleDelete = (index: number) => {
+    setSelectedSurahIds((prev) => {
+      if (index < 0 || index >= prev.length) {
+        return prev;
+      }
+      const updated = [...prev];
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
+
   const handleRakaatChange = (option: (typeof RAKAAT_OPTIONS)[number]) => {
     if (option === rakaat) return;
     setRakaat(option);
@@ -198,11 +209,15 @@ export default function HomePageClient() {
               </div>
             </section>
 
-            <SurahPicker
-              selectedSurahIds={selectedSurahIds}
-              rakaat={rakaat}
-              onToggleSurah={handleToggleSurah}
-            />
+            <div className="flex justify-center lg:block">
+              <div className="w-[390px] max-w-full lg:w-full">
+                <SurahPicker
+                  selectedSurahIds={selectedSurahIds}
+                  rakaat={rakaat}
+                  onToggleSurah={handleToggleSurah}
+                />
+              </div>
+            </div>
 
             <button
               type="button"
@@ -222,6 +237,7 @@ export default function HomePageClient() {
                     selectedSurahIds={selectedSurahIds}
                     moveUp={moveUp}
                     moveDown={moveDown}
+                    handleDelete={handleDelete}
                     theme={theme}
                     creatorName={creatorName}
                   />
@@ -247,6 +263,7 @@ export default function HomePageClient() {
           selectedSurahIds={selectedSurahIds}
           moveUp={moveUp}
           moveDown={moveDown}
+          handleDelete={handleDelete}
           isExportMode
           forceFixedLayout
           theme={theme}
