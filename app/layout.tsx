@@ -1,5 +1,6 @@
 // app/layout.tsx
 import './globals.css';
+import type { Metadata } from 'next';
 import { IBM_Plex_Mono } from 'next/font/google';
 
 const mono = IBM_Plex_Mono({
@@ -7,18 +8,32 @@ const mono = IBM_Plex_Mono({
   weight: ['400', '600'],
 });
 
-export const metadata = {
-  title: 'Tarawih Setlist Generator',
-  description: 'Generate beautiful Tarawih setlists in receipt style',
+export const metadata: Metadata = {
+  metadataBase: new URL('https://tarawihify.space'),
+  title: 'Tarawihify - Generate Your Tarawih Setlist Easily',
+  description:
+    'Generate your Tarawih prayer surah list for 8 or 20 rakaat. Download as Instagram-ready wallpaper or printable format.',
+  keywords: [
+    'tarawih setlist',
+    'tarawih generator',
+    'ramadhan tools',
+    'surah tarawih',
+    'tarawih 8 rakaat',
+    'tarawih 20 rakaat',
+  ],
   openGraph: {
-    title: 'Tarawih Setlist Generator',
-    description: 'Generate beautiful Tarawih setlists in receipt style',
+    title: 'Tarawihify - Tarawih Setlist Generator',
+    description:
+      'Create and download your Tarawih surah sequence for 8 or 20 rakaat.',
+    url: 'https://tarawihify.space',
+    siteName: 'Tarawihify',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Tarawih Setlist Generator',
-    description: 'Generate beautiful Tarawih setlists in receipt style',
+    title: 'Tarawihify - Tarawih Setlist Generator',
+    description:
+      'Generate your Tarawih surah list and download as story-ready layout.',
   },
 };
 
